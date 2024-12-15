@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PostController;
 use App\Models\User;
 
@@ -18,6 +19,7 @@ Route::resource('/transaksis', \App\Http\Controllers\TransaksiController::class)
 Route::resource('/laporans', \App\Http\Controllers\LaporanController::class);
 Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/home',  [UserController::class, 'index'])->name('home');
+Route::get('/laporans', [LaporanController::class, 'index'])->name('laporans.index');
 
 Route::get('/', function(){
     return view('welcome');

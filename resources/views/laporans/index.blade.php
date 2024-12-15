@@ -35,47 +35,51 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
-                            <a href="{{ route('laporans.create') }}" class="btn btn-md btn-success btn-custom">+ Tambah Laporan</a>
+                            <form action="{{ route('laporans.index') }}" method="GET" class="mb-3">
+                            <label for="month">Pilih Bulan:</label>
+                            <select name="month" id="month" class="form-control">
+                                @foreach(range(1, 12) as $m)
+                                    <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
+                                        {{ date('F', mktime(0, 0, 0, $m, 1)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                        </form>
                             <div>
                                 <a href="{{ route('dashboard') }}" class="btn btn-md btn-outline-secondary btn-custom">Dashboard</a>
                                 <a href="{{ route('transaksis.index') }}" class="btn btn-md btn-outline-info btn-custom">Transaksi</a>
                                 <a href="{{ route('products.index') }}" class="btn btn-md btn-outline-primary btn-custom">Produk</a>
                             </div>
                         </div>
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th scope="col">Tanggal</th>
-                                    <th scope="col">Pendapatan</th>
-                                    <th scope="col" style="width: 20%">Opsi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($laporans as $laporan)
+                        <table class="table table-bordered">
+                                <thead>
                                     <tr>
-                                        <td>{{ $laporan->Tanggal }}</td>
-                                        <td>{{ "Rp " . number_format($laporan->Pendapatan,2,',','.') }}</td>
-                                        <td class="text-center">
-                                            <form onsubmit="return confirm('Apakah Anda Yakin ?');" action="{{ route('laporans.destroy', $laporan->id) }}" method="POST">
-                                                <a href="{{ route('laporans.show', $laporan->id) }}" class="btn btn-sm btn-outline-dark me-1">Lihat</a>
-                                                <a href="{{ route('laporans.edit', $laporan->id) }}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
-                                            </form>
-                                        </td>
+                                        <th>Tanggal</th>
+                                        <th>Pendapatan</th>
+                                        <th>Jumlah Barang</th>
+                                        <th>Opsi</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center">
-                                            <div class="alert alert-warning my-3">Data laporan belum tersedia.</div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                        <div class="d-flex justify-content-center mt-3">
-                            {{ $laporans->links() }}
+                                </thead>
+                                <tbody>
+                                    @forelse($laporans as $laporan)
+                                        <tr>
+                                            <td>{{ $laporan->Tanggal }}</td>
+                                            <td>{{ number_format($laporan->Pendapatan, 0, ',', '.') }}</td>
+                                            <td>{{ $laporan->Jumlah_barang }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3">Tidak ada data untuk bulan ini.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+
+                            <!-- Tampilkan pagination -->
+                            <div class="mt-3">
+                                {{ $laporans->links() }}
+                         
                         </div>
                     </div>
                 </div>

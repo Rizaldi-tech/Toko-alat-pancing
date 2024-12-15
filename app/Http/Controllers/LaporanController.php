@@ -14,35 +14,17 @@ use Illuminate\Support\Facades\Storage;
 
 class LaporanController extends Controller
 {
-    public function index() : View
+    public function index(Request $request): View
     {
-        $laporans = laporan::latest()->paginate(10);
-
-        return view('laporans.index', compact('laporans'));
+        $month = $request->input('month', now()->month);
+        $laporans = Laporan::generateReport($month);
+    
+        return view('laporans.index', compact('laporans', 'month'));
     }
-    public function create(): View
+            public function create(): View
     {
         return view('laporans.create');
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'Tanggal'         => 'required|date',
-            'Pendapatan'      => 'required|numeric',
-            'Jumlah_barang'   => 'required|numeric'
-        ]);
-
-        //create product
-        laporan::create([
-            'Tanggal'            => $request->Tanggal,
-            'Pendapatan'         => $request->Pendapatan,
-            'Jumlah_barang'      => $request->Jumlah_barang
-        ]);
-
-        return redirect()->route('laporans.index')->with(['success' => 'Data Berhasil Disimpan!']);
-    }
-    
+    }    
     /**
      * show
      *

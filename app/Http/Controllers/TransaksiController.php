@@ -6,13 +6,11 @@ use App\Models\transaksi;
 use App\Models\Product; 
 
 use Illuminate\View\View;
-
 use Illuminate\Http\Request;
-
 use Illuminate\Http\RedirectResponse;
-
 use Illuminate\Support\Facades\Storage;
-
+use Midtrans\Config;
+use Midtrans\Snap;
 class TransaksiController extends Controller
 {
     public function index() : View
@@ -21,6 +19,39 @@ class TransaksiController extends Controller
 
         return view('transaksis.index', compact('transaksis'));
     }
+
+    public function __construct()
+    {
+        // Set konfigurasi Midtrans
+        Config::$serverKey = 'SB-Mid-server-lhp5feLFweQrDyQ0bLpzMjr4'; // Ganti dengan server key Anda
+        Config::$isProduction = false; // Ubah ke true jika sudah production
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+    }
+
+    public function callback(Request $request)
+{
+    $serverKey = Config::$serverKey;
+    $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+
+    if ($hashed == $request->signature_key) {
+        $transaction = Transaksi::where('order_id', $request->order_id)->first();
+
+        if ($transaction) {
+            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                $transaction->status = 'paid';
+            } elseif ($request->transaction_status == 'pending') {
+                $transaction->status = 'pending';
+            } elseif ($request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
+                $transaction->status = 'failed';
+            }
+            $transaction->save();
+        }
+    }
+
+    return response()->json(['status' => 'success']);
+}
+
     public function create()
     {
         $products = Product::all(); // Ambil semua produk
@@ -48,23 +79,52 @@ public function store(Request $request)
     // Hitung total pembayaran
     $total_payment = $product->price * $request->Jumlah_barang;
 
-    // Buat transaksi
-     Transaksi::create([
+       // Data untuk transaksi Midtrans
+       $transactionDetails = [
+        'order_id' => 'ORDER-' . uniqid(),
+        'gross_amount' => $total_payment,
+    ];
+
+    $itemDetails = [
+        [
+            'id' => $product->id,
+            'price' => $product->price,
+            'quantity' => $request->Jumlah_barang,
+            'name' => $product->title,
+        ],
+    ];
+
+    $customerDetails = [
+        'first_name' => $request->Nama_pembeli,
+        'email' => $request->email, // Pastikan input email ada
+    ];
+
+    $params = [
+        'transaction_details' => $transactionDetails,
+        'item_details' => $itemDetails,
+        'customer_details' => $customerDetails,
+    ];
+
+        // Buat Snap token
+        $snapToken = Snap::getSnapToken($params);
+
+    // Simpan transaksi ke database (opsional: buat status awal "pending")
+    $transaksi = Transaksi::create([
         'product_id' => $request->product_id,
         'Tanggal_transaksi' => $request->Tanggal_transaksi,
         'Nama_pembeli' => $request->Nama_pembeli,
         'Jumlah_barang' => $request->Jumlah_barang,
         'Total_pembayaran' => $total_payment,
+        'status' => 'pending', // Set status awal
+        'snap_token' => $snapToken, // Simpan token Snap
     ]);
-
     // Kurangi stok produk
     $product->stock -= $request->Jumlah_barang;
     $product->save();
 
-    // Redirect dengan pesan sukses
-    return redirect()->route('transaksis.index')->with('success', 'Transaksi berhasil dibuat dan stok produk telah diperbarui.');
-}
-    
+    // Redirect ke halaman pembayaran
+    return view('transaksis.payment', compact('snapToken', 'transaksi'));
+}    
     /**
      * show
      *

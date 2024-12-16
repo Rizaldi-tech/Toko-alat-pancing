@@ -24,6 +24,7 @@ Route::get('/laporans', [LaporanController::class, 'index'])->name('laporans.ind
 Route::get('/', function(){
     return view('welcome');
 });
+Route::post('/midtrans/callback', [TransaksiController::class, 'callback']);
 
 Route::get('/about', function(){
     return view('about');

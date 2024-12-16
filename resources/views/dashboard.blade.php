@@ -102,47 +102,6 @@
         </div>
     </div>
 
-    {{-- Card Laporan --}}
-    <div class="card bg-dark text-white">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title">Laporan</h3>
-            <a href="{{ route('laporans.create') }}" class="btn btn-sm btn-success">Tambah Laporan</a>
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered table-dark table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">Tanggal</th>
-                        <th scope="col">Pendapatan</th>
-                        <th scope="col" style="width: 20%">Opsi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($laporans as $laporan)
-                        <tr>
-                            <td>{{ $laporan->Tanggal }}</td>
-                            <td>{{ 'Rp ' . number_format($laporan->Pendapatan, 2, ',', '.') }}</td>
-                            <td class="text-center">
-                                <form action="{{ route('laporans.destroy', $laporan->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus laporan ini?');">
-                                    <a href="{{ route('laporans.show', $laporan->id) }}" class="btn btn-sm btn-dark">Lihat</a>
-                                    <a href="{{ route('laporans.edit', $laporan->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="text-center">
-                                <div class="alert alert-success">Data Laporan belum tersedia.</div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
 @stop
 
 @section('css')

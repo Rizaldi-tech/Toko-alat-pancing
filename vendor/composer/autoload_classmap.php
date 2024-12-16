@@ -16,7 +16,6 @@ return array(
     'App\\Models\\Product' => $baseDir . '/app/Models/Product.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
     'App\\Models\\admin' => $baseDir . '/app/Models/admin.php',
-    'App\\Models\\laporan' => $baseDir . '/app/Models/laporan.php',
     'App\\Models\\login' => $baseDir . '/app/Models/login.php',
     'App\\Models\\pelanggan' => $baseDir . '/app/Models/pelanggan.php',
     'App\\Models\\transaksi' => $baseDir . '/app/Models/transaksi.php',

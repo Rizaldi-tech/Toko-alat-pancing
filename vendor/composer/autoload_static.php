@@ -526,7 +526,6 @@ class ComposerStaticInit1f10bfa3e592970d062c2a8a3172823d
         'App\\Models\\Product' => __DIR__ . '/../..' . '/app/Models/Product.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
         'App\\Models\\admin' => __DIR__ . '/../..' . '/app/Models/admin.php',
-        'App\\Models\\laporan' => __DIR__ . '/../..' . '/app/Models/laporan.php',
         'App\\Models\\login' => __DIR__ . '/../..' . '/app/Models/login.php',
         'App\\Models\\pelanggan' => __DIR__ . '/../..' . '/app/Models/pelanggan.php',
         'App\\Models\\transaksi' => __DIR__ . '/../..' . '/app/Models/transaksi.php',

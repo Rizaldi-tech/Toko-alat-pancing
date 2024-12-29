@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-
-
     use HasFactory;
 
     protected $fillable = [
@@ -17,11 +15,12 @@ class Product extends Model
         'description',
         'price',
         'stock',
+        'stok',  // Kolom untuk jumlah stok
+        'harga', // Kolom untuk harga produk
     ];
 
     public function transaksis()
     {
         return $this->hasMany(Transaksi::class);
     }
-
 }

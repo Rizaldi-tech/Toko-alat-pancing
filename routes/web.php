@@ -20,6 +20,7 @@ Route::resource('/laporans', \App\Http\Controllers\LaporanController::class);
 Route::get('/dashboard',  [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/home',  [UserController::class, 'index'])->name('home');
 Route::get('/laporans', [LaporanController::class, 'index'])->name('laporans.index');
+Route::post('/laporans/ekspor-pdf', [LaporanController::class, 'eksporPdf'])->name('laporans.eksporPdf');
 
 Route::get('/', function(){
     return view('welcome');
@@ -34,4 +35,6 @@ Route::post('/register', [UserController::class,'register']);
 Route::post('/logout', [UserController::class,'logout']);
 Route::post('/login', [UserController::class,'login']);
 Route::get('/transaksis/{id}/batal', [TransaksiController::class, 'batal'])->name('transaksis.batal');
+Route::post('/transaksis/ranking', [TransaksiController::class, 'ranking'])->name('transaksis.ranking');
+
 

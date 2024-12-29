@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\transaksi; 
-use App\Models\Product; 
+use App\Models\transaksi;
+use App\Models\Product;
 
 use Illuminate\View\View;
 use Illuminate\Http\Request;
@@ -11,6 +11,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 class TransaksiController extends Controller
 {
     public function index() : View
@@ -57,7 +60,7 @@ class TransaksiController extends Controller
         $products = Product::all(); // Ambil semua produk
         return view('transaksis.create', compact('products'));
     }
-    
+
 public function store(Request $request)
 {
     // Validasi input
@@ -124,7 +127,7 @@ public function store(Request $request)
 
     // Redirect ke halaman pembayaran
     return view('transaksis.payment', compact('snapToken', 'transaksi'));
-}    
+}
     /**
      * show
      *
@@ -139,7 +142,7 @@ public function store(Request $request)
         //render view with product
         return view('transaksis.show', compact('transaksi'));
     }
-    
+
     /**
      * edit
      *
@@ -154,7 +157,7 @@ public function store(Request $request)
         //render view with product
         return view('transaksis.edit', compact('transaksi'));
     }
-        
+
     /**
      * update
      *
@@ -198,7 +201,7 @@ public function store(Request $request)
         //redirect to index
         return redirect()->route('dashboard')->with(['success' => 'Data Berhasil Disimpan!']);
     }
-    
+
     /**
      * destroy
      *
@@ -240,6 +243,79 @@ public function batal($id): RedirectResponse
 
     // Redirect ke halaman transaksi dengan pesan sukses
     return redirect()->route('transaksis.index')->with('success', 'Transaksi berhasil dibatalkan dan stok produk telah diperbarui.');
+}
+
+public function ranking()
+{
+    // Mengambil data dari database
+    $data = DB::table('products')
+        ->join('transaksis', 'products.id', '=', 'transaksis.product_id')
+        ->select(
+            'products.id',
+            'products.title',
+            'products.buy_price',
+            'products.harga',
+            'transaksis.Jumlah_barang',
+            'products.stok'
+        )
+        ->get();
+
+    // Mengonversi data ke array
+    $data = json_decode(json_encode($data), true);
+    // dd($data);
+
+    // Menentukan bobot
+    $weights = [
+        'buy_price' => 0.3, // Min
+        'harga' => 0.3,     // Max
+        'Jumlah_barang' => 0.3, // Max
+        'stok' => 0.1      // Min
+    ];
+
+    // Normalisasi data
+    $normalized = [];
+
+    $min_buy_price = min(array_column($data, 'buy_price'));
+    $max_harga = max(array_column($data, 'harga'));
+    $max_jumlah_barang = max(array_column($data, 'Jumlah_barang'));
+    $min_stok = min(array_column($data, 'stok'));
+
+    foreach ($data as $row) {
+        $normalized[] = [
+            'id' => $row['id'],
+            'title' => $row['title'],
+            'buy_price' => $min_buy_price / $row['buy_price'], // Min
+            'harga' => $row['harga'] / $max_harga,             // Max
+            'Jumlah_barang' => $row['Jumlah_barang'] / $max_jumlah_barang, // Max
+            'stok' => $min_stok / $row['stok']                  // Min
+        ];
+    }
+    // dd($normalized);
+
+    // Menghitung nilai preferensi
+    $ranking = [];
+    foreach ($normalized as $row) {
+        $nilai = (
+            ($row['buy_price'] * $weights['buy_price']) +
+            ($row['harga'] * $weights['harga']) +
+            ($row['Jumlah_barang'] * $weights['Jumlah_barang']) +
+            ($row['stok'] * $weights['stok'])
+        );
+        $ranking[] = [
+            'id' => $row['id'],
+            'nilai' => $nilai,
+            'title' => $row['title']
+        ];
+    }
+    // dd($ranking);
+
+    // Mengurutkan hasil rangking
+    usort($ranking, function ($a, $b) {
+        return $b['nilai'] <=> $a['nilai']; // Descending
+    });
+
+    // Kirim data ke view
+    return view('transaksis.ranking', compact('ranking'));
 }
 
 }

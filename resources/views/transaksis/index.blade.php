@@ -36,6 +36,10 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
                             <a href="{{ route('transaksis.create') }}" class="btn btn-md btn-success btn-custom">+ Tambah Transaksi</a>
+                            <form action="{{ route('transaksis.ranking') }}" method="POST" style="display: inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-md btn-warning btn-custom">Hasil Ranking</button>
+                            </form>
                             <div>
                                 <a href="{{ route('dashboard') }}" class="btn btn-md btn-outline-secondary btn-custom">Dashboard</a>
                                 <a href="{{ route('products.index') }}" class="btn btn-md btn-outline-info btn-custom">Produk</a>
@@ -55,11 +59,10 @@
                             <tbody>
                                 @forelse ($transaksis as $transaksi)
                                     <tr>
-                                        <!-- Menggunakan relasi untuk menampilkan nama produk -->
                                         <td>{{ $transaksi->product->title }}</td>
                                         <td>{{ $transaksi->Tanggal_transaksi }}</td>
                                         <td>{{ $transaksi->Jumlah_barang }}</td>
-                                        <td>{{ "Rp " . number_format($transaksi->Total_pembayaran,2,',','.') }}</td>
+                                        <td>{{ "Rp " . number_format($transaksi->Total_pembayaran, 2, ',', '.') }}</td>
                                         <td class="text-center">
                                             <form onsubmit="return confirm('Apakah Anda Yakin ?');" action="{{ route('transaksis.destroy', $transaksi->id) }}" method="POST">
                                                 <a href="{{ route('transaksis.show', $transaksi->id) }}" class="btn btn-sm btn-outline-dark me-1">Lihat</a>
@@ -88,7 +91,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

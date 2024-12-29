@@ -27,16 +27,16 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-10">
-                <div>
-                    <h3 class="text-center my-4">Sistem Manajemen Alat Pancing</h3>
-                    <h4 class="text-center mb-4 text-muted">Laporan</h4>
+                <div class="text-center my-4">
+                    <h3>Sistem Manajemen Alat Pancing</h3>
+                    <h4 class="text-muted">Laporan</h4>
                     <hr>
                 </div>
+
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3">
-                            <form action="{{ route('laporans.index') }}" method="GET" class="mb-3">
-                            <label for="month">Pilih Bulan:</label>
+                        <form action="{{ route('laporans.index') }}" method="GET" class="mb-3">
+                            <label for="month" class="me-2">Pilih Bulan:</label>
                             <select name="month" id="month" class="form-control">
                                 @foreach(range(1, 12) as $m)
                                     <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
@@ -44,54 +44,57 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                            <button type="submit" class="btn btn-primary ms-2">Filter</button>
                         </form>
-                            <div>
-                                <a href="{{ route('dashboard') }}" class="btn btn-md btn-outline-secondary btn-custom">Dashboard</a>
-                                <a href="{{ route('transaksis.index') }}" class="btn btn-md btn-outline-info btn-custom">Transaksi</a>
-                                <a href="{{ route('products.index') }}" class="btn btn-md btn-outline-primary btn-custom">Produk</a>
-                            </div>
-                        </div>
-                        <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Pendapatan</th>
-                                        <th>Jumlah Barang</th>
-                                        <th>Opsi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($laporans as $laporan)
-                                        <tr>
-                                            <td>{{ $laporan->Tanggal }}</td>
-                                            <td>{{ number_format($laporan->Pendapatan, 0, ',', '.') }}</td>
-                                            <td>{{ $laporan->Jumlah_barang }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="3">Tidak ada data untuk bulan ini.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
 
-                            <!-- Tampilkan pagination -->
-                            <div class="mt-3">
-                                {{ $laporans->links() }}
-                         
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Dashboard</a>
+                            <a href="{{ route('transaksis.index') }}" class="btn btn-outline-info">Transaksi</a>
+                            <a href="{{ route('products.index') }}" class="btn btn-outline-primary">Produk</a>
+                            <form action="{{ route('laporans.eksporPdf') }}" method="POST" style="display: inline-block;">
+                                @csrf
+                                @method('POST')
+                                <button type="submit" class="btn btn-outline-success">Ekspor PDF</button>
+                            </form>
+                        </div>
+
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Pendapatan</th>
+                                    <th>Jumlah Barang</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($laporans as $laporan)
+                                    <tr>
+                                        <td>{{ $laporan->Tanggal }}</td>
+                                        <td>{{ number_format($laporan->Pendapatan, 0, ',', '.') }}</td>
+                                        <td>{{ $laporan->Jumlah_barang }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3">Tidak ada data untuk bulan ini.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+
+                        <div class="mt-3">
+                            {{ $laporans->links() }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-         @if(session('success'))
+        @if(session('success'))
             Swal.fire({
                 icon: "success",
                 title: "BERHASIL",
@@ -112,3 +115,4 @@
 
 </body>
 </html>
+

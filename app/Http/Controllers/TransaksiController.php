@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\transaksi;
+use App\Models\Transaksi;
 use App\Models\Product;
-
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -14,11 +13,12 @@ use Midtrans\Snap;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+
 class TransaksiController extends Controller
 {
     public function index() : View
     {
-        $transaksis = transaksi::latest()->paginate(10);
+        $transaksis = Transaksi::latest()->paginate(10);
 
         return view('transaksis.index', compact('transaksis'));
     }
@@ -33,27 +33,27 @@ class TransaksiController extends Controller
     }
 
     public function callback(Request $request)
-{
-    $serverKey = Config::$serverKey;
-    $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+    {
+        $serverKey = Config::$serverKey;
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
-    if ($hashed == $request->signature_key) {
-        $transaction = Transaksi::where('order_id', $request->order_id)->first();
+        if ($hashed == $request->signature_key) {
+            $transaction = Transaksi::where('order_id', $request->order_id)->first();
 
-        if ($transaction) {
-            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
-                $transaction->status = 'paid';
-            } elseif ($request->transaction_status == 'pending') {
-                $transaction->status = 'pending';
-            } elseif ($request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
-                $transaction->status = 'failed';
+            if ($transaction) {
+                if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                    $transaction->status = 'paid';
+                } elseif ($request->transaction_status == 'pending') {
+                    $transaction->status = 'pending';
+                } elseif ($request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
+                    $transaction->status = 'failed';
+                }
+                $transaction->save();
             }
-            $transaction->save();
         }
-    }
 
-    return response()->json(['status' => 'success']);
-}
+        return response()->json(['status' => 'success']);
+    }
 
     public function create()
     {
@@ -61,113 +61,88 @@ class TransaksiController extends Controller
         return view('transaksis.create', compact('products'));
     }
 
-public function store(Request $request)
-{
-    // Validasi input
-    $request->validate([
-        'product_id' => 'required|exists:products,id',
-        'Tanggal_transaksi' => 'required|date',
-        'Nama_pembeli' => 'required|string',
-        'Jumlah_barang' => 'required|integer|min:1',
-    ]);
+    public function store(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'Tanggal_transaksi' => 'required|date',
+            'Nama_pembeli' => 'required|string',
+            'Jumlah_barang' => 'required|integer|min:1',
+        ]);
 
-    // Ambil produk berdasarkan ID
-    $product = Product::findOrFail($request->product_id);
+        // Ambil produk berdasarkan ID
+        $product = Product::findOrFail($request->product_id);
 
-    // Cek apakah stok cukup
-    if ($product->stock < $request->Jumlah_barang) {
-        return redirect()->back()->with('error', 'Stok produk tidak mencukupi');
-    }
+        // Cek apakah stock cukup
+        if ($product->stock < $request->Jumlah_barang) {
+            return redirect()->back()->with('error', 'stock produk tidak mencukupi');
+        }
 
-    // Hitung total pembayaran
-    $total_payment = $product->price * $request->Jumlah_barang;
+        // Hitung total pembayaran
+        $total_payment = $product->price * $request->Jumlah_barang;
 
-       // Data untuk transaksi Midtrans
-       $transactionDetails = [
-        'order_id' => 'ORDER-' . uniqid(),
-        'gross_amount' => $total_payment,
-    ];
+        // Data untuk transaksi Midtrans
+        $transactionDetails = [
+            'order_id' => 'ORDER-' . uniqid(),
+            'gross_amount' => $total_payment,
+        ];
 
-    $itemDetails = [
-        [
-            'id' => $product->id,
-            'price' => $product->price,
-            'quantity' => $request->Jumlah_barang,
-            'name' => $product->title,
-        ],
-    ];
+        $itemDetails = [
+            [
+                'id' => $product->id,
+                'price' => $product->price,
+                'quantity' => $request->Jumlah_barang,
+                'name' => $product->title,
+            ],
+        ];
 
-    $customerDetails = [
-        'first_name' => $request->Nama_pembeli,
-        'email' => $request->email, // Pastikan input email ada
-    ];
+        $customerDetails = [
+            'first_name' => $request->Nama_pembeli,
+            'email' => $request->email, // Pastikan input email ada
+        ];
 
-    $params = [
-        'transaction_details' => $transactionDetails,
-        'item_details' => $itemDetails,
-        'customer_details' => $customerDetails,
-    ];
+        $params = [
+            'transaction_details' => $transactionDetails,
+            'item_details' => $itemDetails,
+            'customer_details' => $customerDetails,
+        ];
 
         // Buat Snap token
         $snapToken = Snap::getSnapToken($params);
 
-    // Simpan transaksi ke database (opsional: buat status awal "pending")
-    $transaksi = Transaksi::create([
-        'product_id' => $request->product_id,
-        'Tanggal_transaksi' => $request->Tanggal_transaksi,
-        'Nama_pembeli' => $request->Nama_pembeli,
-        'Jumlah_barang' => $request->Jumlah_barang,
-        'Total_pembayaran' => $total_payment,
-        'status' => 'pending', // Set status awal
-        'snap_token' => $snapToken, // Simpan token Snap
-    ]);
-    // Kurangi stok produk
-    $product->stock -= $request->Jumlah_barang;
-    $product->save();
+        // Simpan transaksi ke database (opsional: buat status awal "pending")
+        $transaksi = Transaksi::create([
+            'product_id' => $request->product_id,
+            'Tanggal_transaksi' => $request->Tanggal_transaksi,
+            'Nama_pembeli' => $request->Nama_pembeli,
+            'Jumlah_barang' => $request->Jumlah_barang,
+            'Total_pembayaran' => $total_payment,
+            'status' => 'pending', // Set status awal
+            'snap_token' => $snapToken, // Simpan token Snap
+        ]);
+        // Kurangi stock produk
+        $product->stock -= $request->Jumlah_barang;
+        $product->save();
 
-    // Redirect ke halaman pembayaran
-    return view('transaksis.payment', compact('snapToken', 'transaksi'));
-}
-    /**
-     * show
-     *
-     * @param  mixed $id
-     * @return View
-     */
+        // Redirect ke halaman pembayaran
+        return view('transaksis.payment', compact('snapToken', 'transaksi'));
+    }
+
     public function show(string $id): View
     {
-        //get product by ID
-        $transaksi = transaksi::findOrFail($id);
-
-        //render view with product
+        $transaksi = Transaksi::findOrFail($id);
         return view('transaksis.show', compact('transaksi'));
     }
 
-    /**
-     * edit
-     *
-     * @param  mixed $id
-     * @return View
-     */
     public function edit(string $id): View
     {
-        //get product by ID
-        $transaksi = transaksi::findOrFail($id);
-
-        //render view with product
+        $transaksi = Transaksi::findOrFail($id);
         return view('transaksis.edit', compact('transaksi'));
     }
 
-    /**
-     * update
-     *
-     * @param  mixed $request
-     * @param  mixed $id
-     * @return RedirectResponse
-     */
     public function update(Request $request, $id): RedirectResponse
     {
-        //validate form
         $request->validate([
             'Tanggal_transaksi'  => 'required|date',
             'Nama_pembeli'       => 'required|min:1',
@@ -175,147 +150,122 @@ public function store(Request $request)
             'Total_pembayaran'   => 'required|numeric'
         ]);
 
-        //get product by ID
-        $transaksi = transaksi::findOrFail($id);
+        $transaksi = Transaksi::findOrFail($id);
 
-        if ($request) {
+        $transaksi->update([
+            'Tanggal_transaksi' => $request->Tanggal_transaksi,
+            'Nama_pembeli' => $request->Nama_pembeli,
+            'Jumlah_barang' => $request->Jumlah_barang,
+            'Total_pembayaran' => $request->Total_pembayaran
+        ]);
 
-
-            $transaksi->update([
-                'Tanggal_transaksi'            => $request->Tanggal_transaksi,
-                'Nama_pembeli'                 => $request->Nama_pembeli,
-                'Jumlah_barang'                => $request->Jumlah_barang,
-                'Total_pembayaran'             => $request->Total_pembayaran
-                        ]);
-
-        } else {
-
-            $transaksi->update([
-                'Tanggal_transaksi'            => $request->Tanggal_transaksi,
-                'Nama_pembeli'                 => $request->Nama_pembeli,
-                'Jumlah_barang'                => $request->Jumlah_barang,
-                'Total_pembayaran'             => $request->Total_pembayaran
-                        ]);
-        }
-
-        //redirect to index
         return redirect()->route('dashboard')->with(['success' => 'Data Berhasil Disimpan!']);
     }
 
-    /**
-     * destroy
-     *
-     * @param  mixed $id
-     * @return RedirectResponse
-     */
     public function destroy($id): RedirectResponse
     {
-        //get product by ID
-        $transaksi = transaksi::findOrFail($id);
-
-        //delete laporan
+        $transaksi = Transaksi::findOrFail($id);
         $transaksi->delete();
 
-        //redirect to index
-        return redirect()->route('dashboard')->with(['success' => 'Data Berhasil Disimpan!']);
+        return redirect()->route('dashboard')->with(['success' => 'Data Berhasil Dihapus!']);
     }
 
-    /**
- * batal
- *
- * @param  mixed $id
- * @return RedirectResponse
- */
-public function batal($id): RedirectResponse
-{
-    // Ambil transaksi berdasarkan ID
-    $transaksi = transaksi::findOrFail($id);
+    public function batal($id): RedirectResponse
+    {
+        $transaksi = Transaksi::findOrFail($id);
+        $product = Product::findOrFail($transaksi->product_id);
 
-    // Ambil produk terkait transaksi
-    $product = Product::findOrFail($transaksi->product_id);
+        $product->stock += $transaksi->Jumlah_barang;
+        $product->save();
 
-    // Tambahkan kembali jumlah barang ke stok produk
-    $product->stock += $transaksi->Jumlah_barang;
-    $product->save();
+        $transaksi->delete();
 
-    // Hapus transaksi
-    $transaksi->delete();
+        return redirect()->route('transaksis.index')->with('success', 'Transaksi berhasil dibatalkan dan stock produk telah diperbarui.');
+    }
+    public function ranking(Request $request)
+    {
+        // Get start and end date from the request, or set defaults if not provided
+        $startDate = $request->get('startDate', '2024-12-31');
+        $endDate = $request->get('endDate', '2025-01-30');
 
-    // Redirect ke halaman transaksi dengan pesan sukses
-    return redirect()->route('transaksis.index')->with('success', 'Transaksi berhasil dibatalkan dan stok produk telah diperbarui.');
-}
+        // Ensure the user input is a valid date format
+        $startDate = Carbon::createFromFormat('Y-m-d', $startDate)->toDateString();
+        $endDate = Carbon::createFromFormat('Y-m-d', $endDate)->toDateString();
 
-public function ranking()
-{
-    // Mengambil data dari database
-    $data = DB::table('products')
-        ->join('transaksis', 'products.id', '=', 'transaksis.product_id')
-        ->select(
-            'products.id',
-            'products.title',
-            'products.buy_price',
-            'products.harga',
-            'transaksis.Jumlah_barang',
-            'products.stok'
-        )
-        ->get();
 
-    // Mengonversi data ke array
-    $data = json_decode(json_encode($data), true);
-    // dd($data);
 
-    // Menentukan bobot
-    $weights = [
-        'buy_price' => 0.3, // Min
-        'harga' => 0.3,     // Max
-        'Jumlah_barang' => 0.3, // Max
-        'stok' => 0.1      // Min
-    ];
+        // Now you can use these dates in your query
+        $data = DB::table('products')
+            ->join('transaksis', 'products.id', '=', 'transaksis.product_id')
+            ->select(
+                'products.id',
+                'products.title',
+                'products.price',
+                'transaksis.Jumlah_barang',
+                'products.stock'
+            )
+            ->whereBetween('products.created_at', [$startDate, $endDate])
+            ->get();
+                // dd($data);
 
-    // Normalisasi data
-    $normalized = [];
 
-    $min_buy_price = min(array_column($data, 'buy_price'));
-    $max_harga = max(array_column($data, 'harga'));
-    $max_jumlah_barang = max(array_column($data, 'Jumlah_barang'));
-    $min_stok = min(array_column($data, 'stok'));
+        // Convert the data to an array if not empty
+        $data = $data->isEmpty() ? [] : json_decode(json_encode($data), true);
 
-    foreach ($data as $row) {
-        $normalized[] = [
-            'id' => $row['id'],
-            'title' => $row['title'],
-            'buy_price' => $min_buy_price / $row['buy_price'], // Min
-            'harga' => $row['harga'] / $max_harga,             // Max
-            'Jumlah_barang' => $row['Jumlah_barang'] / $max_jumlah_barang, // Max
-            'stok' => $min_stok / $row['stok']                  // Min
+        // Weights
+        $weights = [
+            'price' => 0.5,
+            'Jumlah_barang' => 0.3,
+            'stock' => 0.2
         ];
-    }
-    // dd($normalized);
 
-    // Menghitung nilai preferensi
-    $ranking = [];
-    foreach ($normalized as $row) {
-        $nilai = (
-            ($row['buy_price'] * $weights['buy_price']) +
-            ($row['harga'] * $weights['harga']) +
-            ($row['Jumlah_barang'] * $weights['Jumlah_barang']) +
-            ($row['stok'] * $weights['stok'])
-        );
-        $ranking[] = [
-            'id' => $row['id'],
-            'nilai' => $nilai,
-            'title' => $row['title']
-        ];
-    }
-    // dd($ranking);
-
-    // Mengurutkan hasil rangking
-    usort($ranking, function ($a, $b) {
-        return $b['nilai'] <=> $a['nilai']; // Descending
-    });
-
-    // Kirim data ke view
-    return view('transaksis.ranking', compact('ranking'));
+// Ensure $data is not empty before calculating max/min values
+if (!empty($data)) {
+    $max_price = max(array_column($data, 'price')) ?: 1;
+    $max_jumlah_barang = max(array_column($data, 'Jumlah_barang')) ?: 1;
+    $min_stock = min(array_column($data, 'stock')) ?: 1;
+} else {
+    // Set default values if $data is empty
+    $max_price = 1;
+    $max_jumlah_barang = 1;
+    $min_stock = 1;
 }
 
-}
+
+        // Normalize data
+        $normalized = [];
+        foreach ($data as $row) {
+            $normalized[] = [
+                'id' => $row['id'],
+                'title' => $row['title'],
+                'price' => ($max_price > 0) ? $row['price'] / $max_price : 0,
+                'Jumlah_barang' => ($max_jumlah_barang > 0) ? $row['Jumlah_barang'] / $max_jumlah_barang : 0,
+                'stock' => ($row['stock'] > 0) ? $min_stock / $row['stock'] : 0
+            ];
+        }
+
+        // Calculate preference values
+        $ranking = [];
+        foreach ($normalized as $row) {
+            $nilai = (
+                ($row['price'] * $weights['price']) +
+                ($row['Jumlah_barang'] * $weights['Jumlah_barang']) +
+                ($row['stock'] * $weights['stock'])
+            );
+
+            $ranking[] = [
+                'id' => $row['id'],
+                'title' => $row['title'],
+                'nilai' => round($nilai, 4) // Round to 4 decimal places
+            ];
+        }
+
+        // Sort the ranking in descending order
+        usort($ranking, function ($a, $b) {
+            return $b['nilai'] <=> $a['nilai']; // Descending order
+        });
+
+        // Pass the data to the view, including the startDate and endDate
+        return view('transaksis.ranking', compact('ranking', 'startDate', 'endDate'));
+    }
+            }

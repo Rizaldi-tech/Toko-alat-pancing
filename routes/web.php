@@ -35,6 +35,7 @@ Route::post('/register', [UserController::class,'register']);
 Route::post('/logout', [UserController::class,'logout']);
 Route::post('/login', [UserController::class,'login']);
 Route::get('/transaksis/{id}/batal', [TransaksiController::class, 'batal'])->name('transaksis.batal');
-Route::post('/transaksis/ranking', [TransaksiController::class, 'ranking'])->name('transaksis.ranking');
+Route::match(['get', 'post'], '/transaksis/ranking', [TransaksiController::class, 'ranking'])->name('transaksis.ranking');
+
 
 

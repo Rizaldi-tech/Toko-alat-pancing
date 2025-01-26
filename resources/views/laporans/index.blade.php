@@ -28,7 +28,7 @@
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <div class="text-center my-4">
-                    <h3>Sistem Manajemen Alat Pancing</h3>
+                    <h3>Sistem Manajemen Javajuz</h3>
                     <h4 class="text-muted">Laporan</h4>
                     <hr>
                 </div>
@@ -64,6 +64,7 @@
                                     <th>Tanggal</th>
                                     <th>Pendapatan</th>
                                     <th>Jumlah Barang</th>
+                     
                                 </tr>
                             </thead>
                             <tbody>
@@ -72,10 +73,11 @@
                                         <td>{{ $laporan->Tanggal }}</td>
                                         <td>{{ number_format($laporan->Pendapatan, 0, ',', '.') }}</td>
                                         <td>{{ $laporan->Jumlah_barang }}</td>
+                                        <td>{{ $laporan->topsis_rank }}</td> <!-- Display the rank -->
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3">Tidak ada data untuk bulan ini.</td>
+                                        <td colspan="4">Tidak ada data untuk bulan ini.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -115,4 +117,3 @@
 
 </body>
 </html>
-

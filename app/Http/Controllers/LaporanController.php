@@ -9,7 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
-
 class LaporanController extends Controller
 {
     public function index(Request $request): View
@@ -17,7 +16,6 @@ class LaporanController extends Controller
         $month = $request->input('month', now()->month);
         $laporans = Laporan::generateReport($month);
 
-        // dd($laporans);
         return view('laporans.index', compact('laporans', 'month'));
     }
 
@@ -51,7 +49,6 @@ class LaporanController extends Controller
         // Unduh file PDF
         return $pdf->download('laporan.pdf');
     }
-
 
     public function edit(string $id): View
     {

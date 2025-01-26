@@ -182,90 +182,35 @@ class TransaksiController extends Controller
 
         return redirect()->route('transaksis.index')->with('success', 'Transaksi berhasil dibatalkan dan stock produk telah diperbarui.');
     }
-    public function ranking(Request $request)
+
+    public function ranking(): View
     {
-        // Get start and end date from the request, or set defaults if not provided
-        $startDate = $request->get('startDate', '2024-12-31');
-        $endDate = $request->get('endDate', '2025-01-30');
-
-        // Ensure the user input is a valid date format
-        $startDate = Carbon::createFromFormat('Y-m-d', $startDate)->toDateString();
-        $endDate = Carbon::createFromFormat('Y-m-d', $endDate)->toDateString();
-
-
-
-        // Now you can use these dates in your query
-        $data = DB::table('products')
-            ->join('transaksis', 'products.id', '=', 'transaksis.product_id')
+        // Ambil data produk dan transaksi dengan penjualan terbanyak per tanggal
+        $data = DB::table('transaksis')
+            ->join('products', 'transaksis.product_id', '=', 'products.id')
             ->select(
-                'products.id',
-                'products.title',
-                'products.price',
-                'transaksis.Jumlah_barang',
-                'products.stock'
+                DB::raw('DATE(transaksis.Tanggal_transaksi) as Tanggal'),
+                'products.title as Produk',
+                DB::raw('SUM(transaksis.Jumlah_barang) as TotalPenjualan')
             )
-            ->whereBetween('products.created_at', [$startDate, $endDate])
-            ->get();
-                // dd($data);
+            ->groupBy('Tanggal', 'products.id', 'products.title')
+            ->orderBy('Tanggal', 'asc')
+            ->get()
+            ->groupBy('Tanggal')
+            ->map(function ($groupedData) {
+                return $groupedData->sortByDesc('TotalPenjualan')->first();
+            });
 
-
-        // Convert the data to an array if not empty
-        $data = $data->isEmpty() ? [] : json_decode(json_encode($data), true);
-
-        // Weights
-        $weights = [
-            'price' => 0.5,
-            'Jumlah_barang' => 0.3,
-            'stock' => 0.2
-        ];
-
-// Ensure $data is not empty before calculating max/min values
-if (!empty($data)) {
-    $max_price = max(array_column($data, 'price')) ?: 1;
-    $max_jumlah_barang = max(array_column($data, 'Jumlah_barang')) ?: 1;
-    $min_stock = min(array_column($data, 'stock')) ?: 1;
-} else {
-    // Set default values if $data is empty
-    $max_price = 1;
-    $max_jumlah_barang = 1;
-    $min_stock = 1;
-}
-
-
-        // Normalize data
-        $normalized = [];
-        foreach ($data as $row) {
-            $normalized[] = [
-                'id' => $row['id'],
-                'title' => $row['title'],
-                'price' => ($max_price > 0) ? $row['price'] / $max_price : 0,
-                'Jumlah_barang' => ($max_jumlah_barang > 0) ? $row['Jumlah_barang'] / $max_jumlah_barang : 0,
-                'stock' => ($row['stock'] > 0) ? $min_stock / $row['stock'] : 0
+        // Format data untuk ditampilkan di view
+        $ranking = $data->map(function ($item) {
+            return [
+                'Tanggal' => $item->Tanggal,
+                'Produk' => $item->Produk,
+                'TotalPenjualan' => $item->TotalPenjualan,
             ];
-        }
+        })->values();
 
-        // Calculate preference values
-        $ranking = [];
-        foreach ($normalized as $row) {
-            $nilai = (
-                ($row['price'] * $weights['price']) +
-                ($row['Jumlah_barang'] * $weights['Jumlah_barang']) +
-                ($row['stock'] * $weights['stock'])
-            );
-
-            $ranking[] = [
-                'id' => $row['id'],
-                'title' => $row['title'],
-                'nilai' => round($nilai, 4) // Round to 4 decimal places
-            ];
-        }
-
-        // Sort the ranking in descending order
-        usort($ranking, function ($a, $b) {
-            return $b['nilai'] <=> $a['nilai']; // Descending order
-        });
-
-        // Pass the data to the view, including the startDate and endDate
-        return view('transaksis.ranking', compact('ranking', 'startDate', 'endDate'));
+        // Kirim hasil ranking ke view
+        return view('transaksis.ranking', compact('ranking'));
     }
-            }
+}

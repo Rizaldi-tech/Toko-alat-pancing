@@ -20,6 +20,34 @@
         .btn-custom {
             font-weight: bold;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 0;
+        }
+        .pagination .page-item {
+            margin: 0 3px;
+        }
+        .pagination .page-item .page-link {
+            border-radius: 5px;
+            font-weight: bold;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .pagination .page-item.disabled .page-link {
+            background-color: #f1f1f1;
+            color: #ccc;
+            pointer-events: none;
+        }
+        .pagination .page-link:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -28,7 +56,7 @@
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <div>
-                    <h3 class="text-center my-4">Sistem Manajemen Alat Pancing</h3>
+                    <h3 class="text-center my-4">Sistem Manajemen JavaJuice</h3>
                     <h4 class="text-center mb-4 text-muted">Data Transaksi</h4>
                     <hr>
                 </div>
@@ -83,8 +111,33 @@
                                 @endforelse
                             </tbody>
                         </table>
+
+                        <!-- Pagination -->
                         <div class="d-flex justify-content-center mt-3">
-                            {{ $transaksis->links() }}
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination">
+                                    <!-- Tombol Previous -->
+                                    <li class="page-item {{ $transaksis->onFirstPage() ? 'disabled' : '' }}">
+                                        <a class="page-link" href="{{ $transaksis->previousPageUrl() }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+
+                                    <!-- Pagination Numbers -->
+                                    @foreach ($transaksis->getUrlRange(1, $transaksis->lastPage()) as $page => $url)
+                                        <li class="page-item {{ $page == $transaksis->currentPage() ? 'active' : '' }}">
+                                            <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                        </li>
+                                    @endforeach
+
+                                    <!-- Tombol Next -->
+                                    <li class="page-item {{ $transaksis->hasMorePages() ? '' : 'disabled' }}">
+                                        <a class="page-link" href="{{ $transaksis->nextPageUrl() }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -95,7 +148,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-         @if(session('success'))
+        @if(session('success'))
             Swal.fire({
                 icon: "success",
                 title: "BERHASIL",

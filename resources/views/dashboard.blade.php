@@ -3,13 +3,23 @@
 @section('title', 'Dashboard')
 
 @section('content_header')
-    <h1>Sistem Manajemen Toko Alat Pancing</h1>
+    <h1>Sistem Manajemen JavaJuz</h1>
 @stop
+
+
+    <!-- Tombol navigasi -->
+     @section('content')
+    <div class="mt-4">
+        <a href="{{ route('laporans.index') }}" class="btn btn-primary">Laporan</a>
+        <a href="{{ route('barang.index') }}" class="btn btn-primary">Barang</a>
+        <a href="{{ route('barang_masuk.index') }}" class="btn btn-primary">Barang Masuk</a>
+        <a href="{{ route('barang_keluar.index') }}" class="btn btn-primary">Barang Keluar</a>
+    </div>
 
 @section('content')
     {{-- Card Daftar Produk --}}
     <div class="card bg-dark text-white mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex justify-content-between align-barangss-center">
             <h3 class="card-title">Produk</h3>
             <a href="{{ route('products.create') }}" class="btn btn-sm btn-success">Tambah Produk</a>
         </div>
@@ -57,7 +67,7 @@
 
     {{-- Card Transaksi --}}
     <div class="card bg-dark text-white mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex justify-content-between align-barangss-center">
             <h3 class="card-title">Transaksi</h3>
             <a href="{{ route('transaksis.create') }}" class="btn btn-sm btn-success">Tambah Transaksi</a>
         </div>
@@ -92,7 +102,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center">
+                            <td colspan="5" class="text-center">
                                 <div class="alert alert-success">Data Transaksi belum tersedia.</div>
                             </td>
                         </tr>
@@ -107,3 +117,4 @@
 @section('css')
     <link rel="stylesheet" href="/css/admin_custom.css">
 @stop
+

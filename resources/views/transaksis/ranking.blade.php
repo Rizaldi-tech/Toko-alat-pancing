@@ -1,55 +1,52 @@
-@extends('adminlte::page')
-
-{{-- @section('title', 'Dashboard') --}}
-
-@section('content_header')
-<h1 class="text-center mb-4">Ranking Produk</h1>
-@stop
+@extends('layouts.app')
 
 @section('content')
-    <div class="container mt-5">
-        <form method="post" action="{{ route('transaksis.ranking') }}">
-            @csrf
-            <label for="start_date">Start Date:</label>
-            <input type="date" name="startDate" id="start_date"
-                   value="{{ old('startDate', $startDate) }}" required>
+<div class="container">
+    <div class="card shadow rounded-3">
+        <div class="card-header bg-dark text-white d-flex align-items-center">
+            <i class="bi bi-bar-chart-line me-2"></i>
+            <h1 class="mb-0">Ranking Penjualan Harian</h1>
+        </div>
+        <div class="card-body">
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-            <label for="end_date">End Date:</label>
-            <input type="date" name="endDate" id="end_date"
-                   value="{{ old('endDate', $endDate) }}" required>
-
-            <button type="submit" class="btn btn-primary">Filter</button>
-        </form>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-hover mt-3">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID Produk</th>
-                        <th>Nama Produk</th>
-                        <th>Nilai Preferensi</th>
+                        <th scope="col">
+                            <i class="bi bi-calendar-event me-1"></i>Tanggal
+                        </th>
+                        <th scope="col">
+                            <i class="bi bi-box-seam me-1"></i>Produk
+                        </th>
+                        <th scope="col">
+                            <i class="bi bi-cart-check me-1"></i>Total Penjualan
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($ranking as $rank)
+                    @forelse ($ranking as $data)
                         <tr>
-                            <td>{{ $rank['id'] }}</td>
-                            <td>{{ $rank['title'] }}</td>
-                            <td>{{ number_format($rank['nilai'], 4) }}</td>
+                            <td>{{ $data['Tanggal'] }}</td>
+                            <td>{{ $data['Produk'] }}</td>
+                            <td>{{ $data['TotalPenjualan'] }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center">Tidak ada barang</td>
+                            <td colspan="3" class="text-center text-muted">Data tidak tersedia</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+
+            <a href="{{ route('transaksis.index') }}" class="btn btn-dark mt-4 d-flex align-items-center">
+                <i class="bi bi-arrow-left me-2"></i>Kembali
+            </a>
         </div>
     </div>
-
-    <!-- Bootstrap JS and Popper.js -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    @stop
-
-    @section('css')
-        <link rel="stylesheet" href="/css/admin_custom.css">
-    @stop
+</div>
+@endsection

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,37 +10,21 @@
         body {
             background-color: #f4f6f9;
         }
-
         .form-title {
             font-weight: 600;
             color: #343a40;
         }
-
         .form-label {
             font-weight: 500;
             color: #495057;
         }
     </style>
 </head>
-
 <body>
 
     <div class="container mt-5 mb-5">
-        <!-- Flash Messages for Success or Error -->
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @elseif(session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- Form Title -->
         <h3 class="text-center my-4 form-title">Tambahkan Transaksi</h3>
 
-        <!-- Start Form -->
         <div class="row">
             <div class="col-md-12">
                 <div class="card border-0 shadow-sm rounded">
@@ -49,18 +32,6 @@
                         <form action="{{ route('transaksis.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
-                            <!-- Error Display -->
-                            @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <ul>
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-
-                            <!-- Produk Selection -->
                             <div class="form-group mb-3">
                                 <label for="product_id" class="form-label">Pilih Produk</label>
                                 <select name="product_id" class="form-control" required>
@@ -72,25 +43,21 @@
                                 </select>
                             </div>
 
-                            <!-- Jumlah Barang -->
                             <div class="form-group mb-3">
                                 <label for="Jumlah_barang" class="form-label">Jumlah Barang</label>
                                 <input type="number" name="Jumlah_barang" class="form-control" min="1" required>
                             </div>
 
-                            <!-- Tanggal Transaksi -->
                             <div class="form-group mb-3">
                                 <label for="Tanggal_transaksi" class="form-label">Tanggal Transaksi</label>
                                 <input type="date" name="Tanggal_transaksi" class="form-control" required>
                             </div>
 
-                            <!-- Nama Pembeli -->
                             <div class="form-group mb-4">
                                 <label for="Nama_pembeli" class="form-label">Nama Pembeli</label>
                                 <input type="text" name="Nama_pembeli" class="form-control" required>
                             </div>
 
-                            <!-- Submit and Reset Buttons -->
                             <button type="submit" class="btn btn-primary me-3">Simpan</button>
                             <button type="reset" class="btn btn-warning">Ulangi</button>
                         </form>
@@ -102,5 +69,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
